@@ -1,0 +1,332 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. P12AP05.
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       01 WS-CA.
+          03 WS-PROCESS-FLAG  PIC X(01) VALUE SPACES.
+             88 PROCESS-KEY             VALUE '1'.
+             88 PROCESS-ADD             VALUE '2'.
+             88 PROCESS-UPD-DEL         VALUE '3'.
+             88 PROCESS-DET             VALUE '2', '3'.
+          03 WS-VALID        PIC X(01) VALUE '0'.
+             88 WS-NOTVALID             VALUE '1'.
+          03 WS-EMP-ID        PIC X(05) VALUE SPACES.
+       01 WS-RESP-CODE       PIC S9(15) COMP VALUE ZERO.
+       01 WS-DATE-TIME       PIC S9(15) COMP-3 VALUE ZERO.
+       01 WS-MESSAGE         PIC X(30)  VALUE
+           'END OF THE PROGRAM, BYE,BYE!!'.
+       01 P-DOB              PIC X(10) VALUE SPACES.
+       01 WS-EARN            PIC ZZ,ZZ9.99 VALUE ZERO.
+       01 WS-DEDN            PIC ZZ,ZZ9.99 VALUE ZERO.
+       01 WS-SAL             PIC 9(05)V99  VALUE ZERO.
+       01 WS-SAL-O           PIC ZZ,ZZ9.99 VALUE ZERO.
+       01 WS-NAME            PIC X(15) VALUE SPACES.
+       01 WS-LOC             PIC X(03) VALUE SPACES.
+       01 WS-TECH            PIC X(05) VALUE SPACES.
+          COPY P12AS05.
+          COPY EMPREC.
+          COPY DFHAID.
+          COPY DFHBMSCA.
+       LINKAGE SECTION.
+       01 DFHCOMMAREA     PIC X(06).
+       PROCEDURE DIVISION.
+       MAIN-PARA.
+           IF EIBCALEN = ZERO
+                 PERFORM FIRST-PARA
+           ELSE
+                 MOVE DFHCOMMAREA TO WS-CA
+                 PERFORM NEXT-PARA THRU NEXT-PARA-X
+           END-IF.
+       END-PARA.
+               EXEC CICS RETURN
+                   TRANSID('P12E')
+                   COMMAREA(WS-CA)
+               END-EXEC.
+       FIRST-PARA.
+            MOVE LOW-VALUES TO EMPIDO.
+            PERFORM SEND-FIRST-MAP.
+       SEND-FIRST-MAP.
+            PERFORM DATE-TIME-PARA.
+            EXEC CICS SEND
+                 MAP('KEYMAP')
+                 MAPSET('P12AS05')
+                 FROM (KEYMAPO)
+                 ERASE
+            END-EXEC
+            SET PROCESS-KEY TO TRUE.
+       NEXT-PARA.
+           EVALUATE TRUE
+              WHEN PROCESS-KEY
+                   PERFORM KEY-PARA
+              WHEN PROCESS-DET
+                   PERFORM DETAIL-PARA
+           END-EVALUATE.
+       SEND-PARA.
+           EVALUATE TRUE
+              WHEN PROCESS-KEY
+                EXEC CICS SEND
+                    MAP('KEYMAP')
+                    MAPSET('P12AS05')
+                    FROM (KEYMAPO)
+                    ERASE
+                END-EXEC
+              WHEN PROCESS-DET
+                EXEC CICS SEND
+                    MAP('DETMAP')
+                    MAPSET('P12AS05')
+                    FROM (DETMAPO)
+                    ERASE
+                END-EXEC.
+       NEXT-PARA-X.
+           EXIT.
+       KEY-PARA.
+           EVALUATE EIBAID
+              WHEN DFHENTER
+                 PERFORM PROCESS-KEY-MAP
+              WHEN DFHPF3
+                 EXEC CICS XCTL
+                      PROGRAM('P12AP03')
+                 END-EXEC
+              WHEN OTHER
+                 MOVE 'INVALID KEY PRESSED' TO MSGO
+           END-EVALUATE.
+       PROCESS-KEY-MAP.
+           EXEC CICS RECEIVE
+                MAP('KEYMAP')
+                MAPSET('P12AS05')
+                INTO(KEYMAPI)
+           END-EXEC
+           IF EMPIDL = ZERO
+              MOVE 'PLEASE ENTER AN EMPLOYEE ID' TO MSGO
+           ELSE
+              IF EMPIDI = SPACES
+                 MOVE 'PLEASE ENTER A VALID EMPLOYEE ID' TO MSGO
+              ELSE
+                 PERFORM READ-EMPLOYEE
+              END-IF
+           END-IF.
+       READ-EMPLOYEE.
+           MOVE EMPIDI TO WS-EMP-ID
+           EXEC CICS READ
+               DATASET('P12AFILE')
+               INTO(MASTER-RECORD)
+               RIDFLD(WS-EMP-ID)
+               RESP(WS-RESP-CODE)
+           END-EXEC.
+           EVALUATE WS-RESP-CODE
+              WHEN DFHRESP(NORMAL)
+                 PERFORM MOVE-PARA
+                 SET PROCESS-UPD-DEL TO TRUE
+                 MOVE 'UPDATE/DELETE' TO MODEO
+                 MOVE DFHBMDAR TO ADDA
+                 MOVE DFHBMPRO TO UPDATEA
+              WHEN DFHRESP(NOTFND)
+                 MOVE SPACES TO EMPNAMEO, EMPDOBO, EMPTECHO,
+                                EMPLOCO, EMPEARNO, EMPDEDNO, EMPSALO
+                 SET PROCESS-ADD TO TRUE
+                 MOVE 'ADD EMPLOYEE' TO MODEO
+                 MOVE DFHBMPRO TO ADDA
+                 MOVE DFHBMDAR TO UPDATEA
+           END-EVALUATE.
+       MOVE-DOB.
+           MOVE EMP-DOB(1:4)  TO P-DOB(7:4)
+           MOVE EMP-DOB(5:2)  TO P-DOB(4:2)
+           MOVE EMP-DOB(7:2)  TO P-DOB(1:2)
+           MOVE '/'           TO P-DOB(3:1)
+                                 P-DOB(6:1)
+           MOVE P-DOB TO EMPDOBO.
+       MOVE-PARA.
+                 MOVE EMP-ID TO EMPID1O
+                 MOVE EMP-NAME TO EMPNAMEO
+                 MOVE EMP-TECH TO EMPTECHO
+                 MOVE EMP-LOC TO EMPLOCO
+                 MOVE EMP-EARN TO WS-EARN
+                 PERFORM MOVE-DOB
+                 MOVE WS-EARN TO EMPEARNO
+                 MOVE EMP-DEDN TO WS-DEDN
+                 MOVE WS-DEDN TO EMPDEDNO
+                 COMPUTE WS-SAL = EMP-EARN - EMP-DEDN
+                 MOVE WS-SAL TO WS-SAL-O
+                 MOVE WS-SAL-O TO EMPSALO
+                 MOVE 'EMPLOYEE DETAILS FOUND' TO MSGO.
+       SEND-DETAIL-MAP.
+            PERFORM DATE-TIME-PARA1
+            EXEC CICS SEND
+              MAP('DETMAP')
+              MAPSET('P12AS05')
+              FROM (DETMAPO)
+              ERASE
+            END-EXEC.
+       DETAIL-PARA.
+            EVALUATE EIBAID
+               WHEN DFHPF2
+                   IF PROCESS-ADD
+                      PERFORM ADD-PARA
+                   ELSE
+                      MOVE 'PF2 NOT ENABLED' TO MSG1O
+                   END-IF
+               WHEN DFHPF3
+                   SET PROCESS-KEY TO TRUE
+               WHEN DFHPF4
+                   IF PROCESS-UPD-DEL
+                      PERFORM UPDATE-PARA
+                   ELSE
+                      MOVE 'PF4 NOT ENABLED' TO MSG1O
+                   END-IF
+               WHEN DFHPF5
+                   IF PROCESS-UPD-DEL
+                      PERFORM DELETE-PARA
+                   ELSE
+                      MOVE 'PF5 NOT ENABLED' TO MSG1O
+                   END-IF
+               WHEN OTHER
+                   MOVE 'INVALID KEY PRESSED' TO MSG1O
+            END-EVALUATE.
+       DELETE-PARA.
+            EXEC CICS DELETE
+                      FILE('P12AFILE')
+                      RIDFLD(WS-EMP-ID)
+                      RESP(WS-RESP-CODE)
+            END-EXEC.
+            EVALUATE WS-RESP-CODE
+              WHEN DFHRESP(NORMAL)
+                   MOVE 'DELETE SUCCESSFUL' TO MSG1O
+              WHEN OTHER
+                   EXEC CICS UNLOCK
+                         FILE('P12AFILE')
+                   END-EXEC
+                   MOVE 'DELETE NOT SUCCESSFUL' TO MSG1O
+            END-EVALUATE
+            SET PROCESS-KEY TO TRUE
+            MOVE WS-EMP-ID TO EMPID1O.
+       ADD-PARA.
+           EXEC CICS RECEIVE
+                MAP('DETMAP')
+                MAPSET('P12AS05')
+                INTO(DETMAPI)
+           END-EXEC
+           PERFORM VALIDATE-PARA
+           EVALUATE WS-VALID
+              WHEN 0
+                 MOVE EMPNAMEO TO EMP-NAME
+                 MOVE EMPLOCO TO EMP-LOC
+                 MOVE EMPDOBO TO EMP-DOB
+                 MOVE EMPTECHO TO EMP-TECH
+                 MOVE EMPEARNO TO EMP-EARN
+                 MOVE EMPDEDNO TO EMP-DEDN
+              WHEN 1
+                  MOVE 'INAVLID OPTION PRESSED' TO MSG1O
+           END-EVALUATE
+           PERFORM WRITE-PARA.
+       VALIDATE-PARA.
+           IF EMPNAMEL = ZERO OR
+              EMPLOCL  = ZERO OR
+              EMPDOBL  = ZERO OR
+              EMPTECHL = ZERO OR
+              EMPEARNL = ZERO OR
+              EMPDEDNL = ZERO OR
+              EMPSALL = ZERO
+              MOVE 'PLEASE ENTER A CREDENTIALS' TO MSG1O
+           ELSE
+              IF EMPNAMEI = SPACES OR
+                 EMPLOCI = SPACES  OR
+                 EMPDOBI = SPACES  OR
+                 EMPTECHI = SPACES OR
+                 EMPEARNI = SPACES OR
+                 EMPDEDNI = SPACES OR
+                 EMPSALI = SPACES
+                 MOVE 'PLEASE ENTER A VALID ENTRY' TO MSG1O
+              ELSE
+                 MOVE EMPNAMEI TO WS-NAME
+                 MOVE WS-NAME TO EMPNAMEO
+                 MOVE EMPLOCI TO WS-LOC
+                 MOVE WS-LOC TO EMPLOCO
+                 MOVE EMPDOBI TO P-DOB
+                 MOVE P-DOB TO EMPDOBO
+                 MOVE EMPTECHI TO WS-TECH
+                 MOVE WS-TECH TO EMPTECHO
+                 MOVE EMPEARNI TO WS-EARN
+                 MOVE WS-EARN TO EMPEARNO
+                 MOVE EMPDEDNI TO WS-DEDN
+                 MOVE WS-DEDN TO EMPDEDNO
+                 MOVE EMPSALI TO WS-SAL
+                 MOVE WS-SAL TO WS-SAL-O
+                 MOVE WS-SAL-O TO EMPSALO
+              END-IF
+           END-IF.
+       WRITE-PARA.
+            EXEC CICS WRITE
+                      FILE('P12AFILE')
+                      FROM(MASTER-RECORD)
+                      RIDFLD(WS-EMP-ID)
+                     RESP(WS-RESP-CODE)
+            END-EXEC
+               EVALUATE WS-RESP-CODE
+                  WHEN DFHRESP(NORMAL)
+                     MOVE 'ADD SUCCESSFULLY DONE' TO MSG1O
+                  WHEN OTHER
+                     MOVE 'ADD NOT SUCCESSFUL' TO MSG1O
+               END-EVALUATE
+               SET PROCESS-KEY TO TRUE
+               MOVE WS-EMP-ID TO EMPID1O.
+       UPDATE-PARA.
+           EXEC CICS RECEIVE
+                MAP('DETMAP')
+                MAPSET('P12AS05')
+                INTO(DETMAPI)
+           END-EXEC
+           PERFORM VALIDATE-PARA
+           EVALUATE WS-VALID
+              WHEN 0
+                 MOVE EMPNAMEO TO EMP-NAME
+                 MOVE EMPLOCO  TO EMP-LOC
+                 MOVE EMPDOBO  TO EMP-DOB
+                 MOVE EMPTECHO TO EMP-TECH
+                 MOVE EMPEARNO TO EMP-EARN
+                 MOVE EMPDEDNO TO EMP-DEDN
+              WHEN 1
+                  MOVE 'INVALID OPTION PRESSED' TO MSG1O
+           END-EVALUATE
+           PERFORM REWRITE-PARA.
+       REWRITE-PARA.
+              EXEC CICS READ
+                   FILE('P12AFILE')
+                   INTO(MASTER-RECORD)
+                   RIDFLD(WS-EMP-ID)
+                   UPDATE
+                   RESP(WS-RESP-CODE)
+              END-EXEC
+              EVALUATE WS-RESP-CODE
+              WHEN DFHRESP(NORMAL)
+                 EXEC CICS REWRITE
+                      FILE('P12AFILE')
+                      FROM(MASTER-RECORD)
+                 END-EXEC
+                 MOVE 'UPDATE SUCCESSFUL' TO MSG1O
+              WHEN OTHER
+                 MOVE 'UPDATE NOT SUCCESSFUL' TO MSG1O
+              END-EVALUATE
+              SET PROCESS-KEY TO TRUE
+              MOVE WS-EMP-ID TO EMPID1O.
+       DATE-TIME-PARA.
+           EXEC CICS ASKTIME
+                ABSTIME(WS-DATE-TIME)
+           END-EXEC.
+           EXEC CICS FORMATTIME
+                ABSTIME(WS-DATE-TIME)
+                DDMMYYYY(DATEO)
+                DATESEP
+                TIME(TIMEO)
+                TIMESEP
+          END-EXEC.
+       DATE-TIME-PARA1.
+           EXEC CICS ASKTIME
+                ABSTIME(WS-DATE-TIME)
+           END-EXEC.
+           EXEC CICS FORMATTIME
+                ABSTIME(WS-DATE-TIME)
+                DDMMYYYY(DATE1O)
+                DATESEP
+                TIME(TIME1O)
+                TIMESEP
+          END-EXEC.
