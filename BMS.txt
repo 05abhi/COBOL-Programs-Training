@@ -1,0 +1,225 @@
+         PRINT NOGEN
+P01AS04  DFHMSD TYPE=&SYSPARM,                                         C
+               CTRL=(FREEKB),                                          C
+               LANG=COBOL,                                             C
+               MODE=INOUT,                                             C
+               MAPATTS=COLOR,                                          C
+               STORAGE=AUTO,                                           C
+               TIOAPFX=YES
+**********************************************************************
+KEYMAP   DFHMDI COLUMN=0001,                                           C
+               LINE=0001,                                              C
+               SIZE=(24,80)
+         DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='DATE: ',                                       C
+               LENGTH=6,                                               C
+               POS=(1,1)
+DATE1    DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='DD/MM/CCYY',                                   C
+               LENGTH=10,                                              C
+               POS=(1,8)
+         DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='TIME: ',                                       C
+               LENGTH=6,                                               C
+               POS=(1,64)
+TIME1    DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='HH:MM:SS',                                     C
+               LENGTH=8,                                               C
+               POS=(1,71)
+         DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='EMPLOYEE INQUIRY PROGRAM',                     C
+               LENGTH=26,                                              C
+               POS=(3,27)
+* EMPLOYEE ID
+         DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='EMP ID  : ',                                   C
+               LENGTH=10,                                              C
+               POS=(5,12)
+ID1      DFHMDF ATTRB=(UNPROT,NUM,FSET,IC),                            C
+               INITIAL='00000',                                        C
+               LENGTH=5,                                               C
+               POS=(5,25)
+         DFHMDF ATTRB=PROT,                                            C
+               INITIAL=' ',                                            C
+               LENGTH=1,                                               C
+               POS=(5,31)
+*
+MSG1     DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='ENTER EMPLOYEE ID TO PROCESS                   C
+                  ',                                                   C
+               COLOR=RED,                                              C
+               LENGTH=50,                                              C
+               POS=(23,2)
+         DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='ENTER = PROCESS;                  PF3 = EXIT', C
+               LENGTH=44,                                              C
+               POS=(24,1)
+**********************************************************************
+DETMAP   DFHMDI COLUMN=0001,                                           C
+               LINE=0001,                                              C
+               SIZE=(24,80)
+         DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='DATE: ',                                       C
+               LENGTH=6,                                               C
+               POS=(1,1)
+DATE2    DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='DD/MM/CCYY',                                   C
+               LENGTH=10,                                              C
+               POS=(1,8)
+         DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='TIME: ',                                       C
+               LENGTH=6,                                               C
+               POS=(1,64)
+TIME2    DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='HH:MM:SS',                                     C
+               LENGTH=8,                                               C
+               POS=(1,71)
+         DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='EMPLOYEE MAINTENANCE PROGRAM',                 C
+               LENGTH=28,                                              C
+               POS=(3,12)
+         DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='MODE:',                                        C
+               LENGTH=5,                                               C
+               POS=(3,50)
+MODE     DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='UPDATE / DELETE',                              C
+               LENGTH=15,                                              C
+               POS=(3,60)
+* EMPLOYEE ID
+         DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='EMP ID  : ',                                   C
+               LENGTH=10,                                              C
+               POS=(5,12)
+ID2      DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='00000',                                        C
+               LENGTH=5,                                               C
+               POS=(5,25)
+         DFHMDF ATTRB=PROT,                                            C
+               INITIAL=' ',                                            C
+               LENGTH=1,                                               C
+               POS=(5,31)
+* EMPLOYEE NAME
+         DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='EMP NAME: ',                                   C
+               LENGTH=10,                                              C
+               POS=(7,12)
+NAME     DFHMDF ATTRB=(UNPROT,BRT,FSET),                               C
+               INITIAL='               ',                              C
+               LENGTH=15,                                              C
+               POS=(7,25)
+         DFHMDF ATTRB=ASKIP,                                           C
+               INITIAL=' ',                                            C
+               LENGTH=1,                                               C
+               POS=(7,41)
+* EMPLOYEE LOCATION
+         DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='EMP LOC : ',                                   C
+               LENGTH=10,                                              C
+               POS=(9,12)
+LOC      DFHMDF ATTRB=(UNPROT,BRT,FSET),                               C
+               INITIAL='               ',                              C
+               LENGTH=3,                                               C
+               POS=(9,25)
+         DFHMDF ATTRB=ASKIP,                                           C
+               INITIAL=' ',                                            C
+               LENGTH=1,                                               C
+               POS=(9,29)
+* EMPLOYEE DATE OF BIRTH
+         DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='EMP DOB : ',                                   C
+               LENGTH=10,                                              C
+               POS=(11,12)
+DOBDD    DFHMDF ATTRB=(UNPROT,NUM,BRT,FSET),                           C
+               INITIAL='00',                                           C
+               LENGTH=2,                                               C
+               POS=(11,25)
+DOBMM    DFHMDF ATTRB=(UNPROT,NUM,BRT,FSET),                           C
+               INITIAL='00',                                           C
+               LENGTH=2,                                               C
+               POS=(11,28)
+DOBYY    DFHMDF ATTRB=(UNPROT,NUM,BRT,FSET),                           C
+               INITIAL='0000',                                         C
+               LENGTH=4,                                               C
+               POS=(11,31)
+         DFHMDF ATTRB=ASKIP,                                           C
+               INITIAL=' ',                                            C
+               LENGTH=1,                                               C
+               POS=(11,36)
+* EMPLOYEE TECHNOLOGY
+         DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='EMP TECH: ',                                   C
+               LENGTH=10,                                              C
+               POS=(13,12)
+TECH     DFHMDF ATTRB=(UNPROT,BRT,FSET),                               C
+               INITIAL='               ',                              C
+               LENGTH=5,                                               C
+               POS=(13,25)
+         DFHMDF ATTRB=ASKIP,                                           C
+               INITIAL=' ',                                            C
+               LENGTH=1,                                               C
+               POS=(13,31)
+* EMPLOYEE EARNINGS
+         DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='EMP EARN: ',                                   C
+               LENGTH=10,                                              C
+               POS=(15,12)
+EARNRS   DFHMDF ATTRB=(UNPROT,NUM,BRT,FSET),                           C
+               INITIAL='00000',                                        C
+               LENGTH=5,                                               C
+               POS=(15,25)
+EARNPS   DFHMDF ATTRB=(UNPROT,NUM,BRT,FSET),                           C
+               INITIAL='00',                                           C
+               LENGTH=2,                                               C
+               POS=(15,31)
+         DFHMDF ATTRB=ASKIP,                                           C
+               INITIAL=' ',                                            C
+               LENGTH=1,                                               C
+               POS=(15,34)
+* EMPLOYEE DEDUCTIONS
+         DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='EMP DEDN: ',                                   C
+               LENGTH=10,                                              C
+               POS=(17,12)
+DEDNRS   DFHMDF ATTRB=(UNPROT,NUM,BRT,FSET),                           C
+               INITIAL='00000',                                        C
+               LENGTH=5,                                               C
+               POS=(17,25)
+DEDNPS   DFHMDF ATTRB=(UNPROT,NUM,BRT,FSET),                           C
+               INITIAL='00',                                           C
+               LENGTH=2,                                               C
+               POS=(17,31)
+         DFHMDF ATTRB=ASKIP,                                           C
+               INITIAL=' ',                                            C
+               LENGTH=1,                                               C
+               POS=(17,34)
+* EMPLOYEE SALARY
+         DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='EMP SAL : ',                                   C
+               LENGTH=10,                                              C
+               POS=(19,12)
+SAL      DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='               ',                              C
+               LENGTH=9,                                               C
+               POS=(19,25)
+*
+MSG2     DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='ENTER / UPDATE THE EMPLOYEE DETAILS            C
+                  ',                                                   C
+               COLOR=RED,                                              C
+               LENGTH=50,                                              C
+               POS=(23,2)
+         DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='PF2=ADD; ',                                    C
+               LENGTH=10,                                              C
+               POS=(24,1)
+         DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='PF3=EXIT;',                                    C
+               LENGTH=10,                                              C
+               POS=(24,12)
+         DFHMDF ATTRB=(PROT,BRT),                                      C
+               INITIAL='PF4=UPDATE; PF5=DELETE',                       C
+               LENGTH=22,                                              C
+               POS=(24,24)
+         DFHMSD TYPE=FINAL
+         END
