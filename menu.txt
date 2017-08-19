@@ -1,0 +1,85 @@
+000100 IDENTIFICATION DIVISION.                                         00010001
+000200 PROGRAM-ID. P24AP01.                                             00020009
+000300 DATA DIVISION.                                                   00030001
+000400                                                                  00040001
+000500 WORKING-STORAGE SECTION.                                         00050001
+000600 01  WS-CA          PIC X(01).                                    00060001
+000700 01  WS-OPTION      PIC 9(01) VALUE ZERO.                         00070001
+000800     88  VALID-OPTION         VALUE 1 THRU 2.                     00080001
+000900 01  WS-OPTION-X    REDEFINES WS-OPTION                           00090001
+001000                    PIC X(01).                                    00100001
+001100 01  WS-MESSAGE     PIC X(30) VALUE 'END OF THE PROGRAM'.         00110001
+001200                                                                  00120001
+001300     COPY P24AS01.                                                00130009
+001400     COPY DFHAID.                                                 00140001
+001500 LINKAGE SECTION.                                                 00150001
+001600 01  DFHCOMMAREA   PIC X(01).                                     00160001
+001700                                                                  00170001
+001800 PROCEDURE DIVISION.                                              00180001
+001900 MAIN-PARA.                                                       00190001
+002000     IF EIBCALEN = ZERO                                           00200001
+002100         PERFORM FIRST-PARA                                       00210001
+002200     ELSE                                                         00220001
+002300         PERFORM NEXT-PARA.                                       00230001
+002400                                                                  00240001
+002500 END-PARA.                                                        00250001
+002600     EXEC CICS RETURN                                             00260001
+002700         TRANSID('P24A')                                          00270009
+002800         COMMAREA(WS-CA)                                          00280001
+002900     END-EXEC.                                                    00290001
+003000                                                                  00300001
+003100 FIRST-PARA.                                                      00310001
+003200     MOVE LOW-VALUES TO OPTION1O                                  00320002
+003300     PERFORM SEND-MAP.                                            00330001
+003400                                                                  00340001
+003500 SEND-MAP.                                                        00350001
+003600     EXEC CICS SEND                                               00360001
+003700         MAP('UMENU')                                             00370001
+003800         MAPSET('P24AS01')                                        00380009
+003900         FROM (UMENUO)                                            00390001
+004000         ERASE                                                    00400001
+004100     END-EXEC.                                                    00410001
+004200                                                                  00420001
+004300 NEXT-PARA.                                                       00430001
+004400     EVALUATE EIBAID                                              00440001
+004500        WHEN DFHPF3                                               00450001
+004600           EXEC CICS SEND TEXT                                    00460001
+004700                FROM(WS-MESSAGE)                                  00470001
+004800                ERASE                                             00480001
+004900           END-EXEC                                               00490001
+005000           EXEC CICS RETURN                                       00500001
+005100           END-EXEC                                               00510001
+005200        WHEN DFHENTER                                             00520001
+005300            PERFORM PROCESS-PARA                                  00530001
+005400        WHEN OTHER                                                00540001
+005500            MOVE 'INVALID KEY PRESSED' TO MSG1O                   00550001
+005600     END-EVALUATE                                                 00560001
+005700     PERFORM SEND-MAP.                                            00570001
+005800                                                                  00580001
+005900 PROCESS-PARA.                                                    00590001
+006000     PERFORM RECEIVE-MAP                                          00600001
+006100     MOVE OPTION1I TO WS-OPTION-X                                 00610001
+006200     IF VALID-OPTION                                              00620001
+006300         PERFORM TRANSFER-PARA                                    00630001
+006400     ELSE                                                         00640001
+006500         MOVE 'INVALID OPTION' TO MSG1O                           00650001
+006600     END-IF.                                                      00660001
+006700                                                                  00670001
+006800 TRANSFER-PARA.                                                   00680001
+006900     EVALUATE WS-OPTION                                           00690001
+007000         WHEN 1                                                   00700001
+007100             EXEC CICS XCTL                                       00710001
+007200                 PROGRAM('P24AP02')                               00720009
+007300             END-EXEC                                             00730003
+007400         WHEN 2                                                   00740001
+007500             EXEC CICS XCTL                                       00750001
+007600                 PROGRAM('P24AP03')                               00760009
+007700             END-EXEC                                             00770003
+007800     END-EVALUATE.                                                00780001
+007900                                                                  00790001
+008000 RECEIVE-MAP.                                                     00800001
+008100     EXEC CICS RECEIVE                                            00810001
+008200          MAP('UMENU')                                            00820001
+008300         MAPSET('P24AS01')                                        00830009
+008400          INTO(UMENUI)                                            00840001
+008500     END-EXEC.                                                    00850001
